@@ -1,4 +1,5 @@
 use axum::{routing::get, Router};
+use bit_bot::api::bybit::BybitClient;
 use dotenv::dotenv;
 use std::net::SocketAddr;
 
