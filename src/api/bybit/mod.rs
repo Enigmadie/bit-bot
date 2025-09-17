@@ -11,7 +11,8 @@ use crate::utils::config::Env;
 #[derive(Debug, Clone)]
 pub struct BybitClient {
     api_key: String,
-    api_secret: String,
+    secret_key: String,
+    api_url: String,
 }
 
 type HmacSha256 = Hmac<Sha256>;
@@ -23,7 +24,7 @@ pub struct Res {
     unifiedMarginStatus: u32,
     dcpStatus: String,
     timeWindow: u32,
-    smpGroup: Vec<u32>,
+    smpGroup: u32,
     isMasterTrader: bool,
     spotHedgingStatus: String,
 }
@@ -35,24 +36,31 @@ pub struct AccountInfo {
     pub result: Res,
 }
 
+impl Default for BybitClient {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BybitClient {
     pub const RECV_WINDOW: u16 = 20000;
 
-    pub fn new(api_key: String, api_secret: String) -> Self {
-        BybitClient {
-            api_key,
-            api_secret,
+    pub fn new() -> Self {
+        let env = Env::from_env();
+        Self {
+            api_key: env.api_key_bybit,
+            secret_key: env.secret_bybit,
+            api_url: env.api_bybit_url,
         }
     }
 
     pub async fn get_account_info(&self) -> Result<AccountInfo, reqwest::Error> {
         let params = HashMap::new();
-        let timestamp = Utc::now().timestamp();
+        let timestamp = Utc::now().timestamp_millis();
         let signature = self.create_signature(timestamp, params);
 
         let path = "/v5/account/info";
-        let api_url = Env::from_env().api_bybit_url;
-        let url = format!("{}{}", api_url, path);
+        let url = format!("{}{}", &self.api_url, path);
 
         let mut headers = HeaderMap::new();
         headers.insert("X-BAPI-SIGN-TYPE", HeaderValue::from_str("2").unwrap());
@@ -67,7 +75,7 @@ impl BybitClient {
         headers.insert("X-BAPI-SIGN", HeaderValue::from_str(&signature).unwrap());
         headers.insert(
             "X-BAPI-TIMESTAMP",
-            HeaderValue::from_str(&signature).unwrap(),
+            HeaderValue::from_str(&timestamp.to_string()).unwrap(),
         );
 
         let client = reqwest::Client::new();
@@ -97,11 +105,29 @@ impl BybitClient {
             query_string
         );
 
-        let mut mac = HmacSha256::new_from_slice(&self.api_key.clone().into_bytes())
+        let mut mac = HmacSha256::new_from_slice(self.secret_key.as_bytes())
             .expect("HMAC can take key of any size");
         mac.update(&meta.into_bytes());
         let result = mac.finalize();
         let code_bytes = result.into_bytes();
         hex::encode(code_bytes)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_signature() {
+        let client = BybitClient {
+            api_key: "test_key".to_string(),
+            secret_key: "test_secret".to_string(),
+            api_url: "https://api.bybit.com".to_string(),
+        };
+        let timestamp = 1697587200000;
+        let params = HashMap::new();
+        let signature = client.create_signature(timestamp, params);
+        assert_eq!(signature.len(), 64);
     }
 }

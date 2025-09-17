@@ -1,12 +1,12 @@
 use axum::{routing::get, Router};
-use bit_bot::api::bybit::BybitClient;
+use bit_bot::routes::get_account_info;
 use dotenv::dotenv;
 use std::net::SocketAddr;
 
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    let app = Router::new();
+    let app = Router::new().route("/", get(get_account_info));
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
 
     axum::serve(
