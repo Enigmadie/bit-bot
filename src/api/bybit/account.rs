@@ -7,21 +7,23 @@ use serde::{Deserialize, Serialize};
 use super::BybitClient;
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Res {
-    marginMode: String,
-    updatedTime: String,
-    unifiedMarginStatus: u32,
-    dcpStatus: String,
-    timeWindow: u32,
-    smpGroup: u32,
-    isMasterTrader: bool,
-    spotHedgingStatus: String,
+    margin_mode: String,
+    updated_time: String,
+    unified_margin_status: u32,
+    dcp_status: String,
+    time_window: u32,
+    smp_group: u32,
+    is_master_trader: bool,
+    spot_headging_status: String,
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AccountInfo {
-    pub retCode: i32,
-    pub retMsg: String,
+    pub ret_code: i32,
+    pub ret_msg: String,
     pub result: Res,
 }
 
@@ -63,9 +65,5 @@ impl BybitClient {
             .await?;
 
         Ok(response)
-    }
-
-    pub fn place_order(&self) {
-        // Implementation for placing an order on Bybit
     }
 }
