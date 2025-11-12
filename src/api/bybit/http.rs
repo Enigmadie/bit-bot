@@ -2,6 +2,7 @@ use anyhow::{anyhow, Context, Result};
 use chrono::Utc;
 use hmac::{Hmac, Mac};
 use serde::{de::DeserializeOwned, Deserialize};
+use serde_json::Value;
 use sha2::Sha256;
 
 use super::BybitClient;
@@ -13,9 +14,12 @@ type HmacSha256 = Hmac<Sha256>;
 struct ApiResp<T> {
     ret_code: i32,
     ret_msg: String,
+    #[serde(default)]
     result: Option<T>,
     #[serde(default)]
-    ret_ext_info: Option<serde_json::Value>,
+    ret_ext_info: Option<Value>,
+    #[serde(default)]
+    time: Option<u64>,
 }
 
 impl BybitClient {
@@ -59,7 +63,17 @@ impl BybitClient {
             .with_context(|| format!("decode ApiResp (GET): {}", truncate(&text)))?;
 
         if api.ret_code != 0 {
-            return Err(anyhow!("Bybit {}: {}", api.ret_code, api.ret_msg));
+            let ext = api
+                .ret_ext_info
+                .as_ref()
+                .map(|v| v.to_string())
+                .unwrap_or_default();
+            let extra = if ext.is_empty() {
+                "".to_string()
+            } else {
+                format!(" | {}", ext)
+            };
+            return Err(anyhow!("Bybit {}: {}{}", api.ret_code, api.ret_msg, extra));
         }
 
         let val = api.result.unwrap_or(serde_json::Value::Null);
