@@ -1,6 +1,6 @@
 use reqwest::Client;
 
-use crate::utils::config::Env;
+use crate::shared::utils::config::Env;
 
 #[derive(Debug, Clone)]
 pub struct BybitClient {

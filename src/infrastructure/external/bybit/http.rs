@@ -9,6 +9,7 @@ use super::BybitClient;
 
 type HmacSha256 = Hmac<Sha256>;
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct ApiResp<T> {

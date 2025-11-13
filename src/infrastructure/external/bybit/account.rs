@@ -1,4 +1,4 @@
-use crate::utils::deserializer::de_u64_str_ok;
+use crate::shared::utils::deserializer::de_u64_str_ok;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
